@@ -1,5 +1,6 @@
 from google.cloud import storage
 from email.mime.text import MIMEText
+from datetime import datetime
 import smtplib
 
 
@@ -11,15 +12,29 @@ def list_blobs(project_id, bucket_name):
 
     header = "<html><body>"
     body = ""
+
+    current_dateTime = datetime.now()
+    print("[{}] Start scan".format(current_dateTime))
+
     for blob in blobs:
-        print(blob.name)
         item = blob.name
-        body = "{}{}<br/>".format(body, item)
+        if "." in item and "/" in item:
+            # containing full path of file and folder
+            body = "{} - {}<br/>".format(body, item)
+        elif "/" in item:
+            # containing only folder
+            body = "{} <br/>Folder : {}<br/>".format(body, item)
+        elif "." in item:
+            # containing only file
+            body = "{} - {}<br/>".format(body, item)
 
     footer = "</body></html>"
 
     data = "{}{}{}".format(header, body, footer)
-    
+
+    current_dateTime = datetime.now()
+    print("[{}] End scan".format(current_dateTime))
+
     return data
 
 def send_email(subject, body, GMAIL_USERNAME, recipients, GMAIL_APP_PASSWORD):
@@ -30,7 +45,9 @@ def send_email(subject, body, GMAIL_USERNAME, recipients, GMAIL_APP_PASSWORD):
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
        smtp_server.login(GMAIL_USERNAME, GMAIL_APP_PASSWORD)
        smtp_server.sendmail(GMAIL_USERNAME, recipients, msg.as_string())
-    print("Message sent!")
+
+    current_dateTime = datetime.now()
+    print("[{}] Report sent!".format(current_dateTime))
 
 
 # project and bucket data
@@ -40,7 +57,8 @@ bucket_name = "redacted"
 # sending email properties
 GMAIL_USERNAME = "redacted"
 GMAIL_APP_PASSWORD = "redacted"
-subject = "Email Subject"
+current_dateTime = datetime.now()
+subject = "[{}] Report scan Public GCS".format(current_dateTime)
 body = "This is the body of the text message"
 recipients = ["redacted"]
 
