@@ -4,6 +4,14 @@ from datetime import datetime
 import smtplib
 
 
+def list_buckets(project_id):
+    storage_client = storage.Client(project=project_id)
+    list_bucket = []
+    for bucket in storage_client.list_buckets():
+        list_bucket.append(bucket)
+
+    return list_bucket
+
 def list_blobs(project_id, bucket_name):
     """Lists all the blobs in the bucket."""
     storage_client = storage.Client(project=project_id)
@@ -14,7 +22,7 @@ def list_blobs(project_id, bucket_name):
     body = ""
 
     current_dateTime = datetime.now()
-    print("[{}] Start scan".format(current_dateTime))
+    print("[{}] Start scan bucket {}".format(current_dateTime, bucket_name))
 
     for blob in blobs:
         item = blob.name
@@ -33,7 +41,7 @@ def list_blobs(project_id, bucket_name):
     data = "{}{}{}".format(header, body, footer)
 
     current_dateTime = datetime.now()
-    print("[{}] End scan".format(current_dateTime))
+    print("[{}] End scan {}".format(current_dateTime, bucket_name))
 
     return data
 
@@ -52,16 +60,17 @@ def send_email(subject, body, GMAIL_USERNAME, recipients, GMAIL_APP_PASSWORD):
 
 # project and bucket data
 project_id = "redacted"
-bucket_name = "redacted"
 
 # sending email properties
 GMAIL_USERNAME = "redacted"
 GMAIL_APP_PASSWORD = "redacted"
-current_dateTime = datetime.now()
-subject = "[{}] Report scan Public GCS".format(current_dateTime)
 body = "This is the body of the text message"
 recipients = ["redacted"]
 
 # main code
-html_data_email = list_blobs(project_id, bucket_name)
-send_email(subject, html_data_email, GMAIL_USERNAME, recipients, GMAIL_APP_PASSWORD)
+list_bucket = list_buckets(project_id)
+for item_list_bucket in list_bucket:
+    html_data_email = list_blobs(project_id, item_list_bucket)
+    current_dateTime = datetime.now()
+    subject = "[{}] Report scan Public GCS {}".format(current_dateTime, item_list_bucket)
+    send_email(subject, html_data_email, GMAIL_USERNAME, recipients, GMAIL_APP_PASSWORD)
